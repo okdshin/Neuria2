@@ -47,8 +47,11 @@ public:
 			OnPeerClosedFunc on_peer_closed, 
 			OnFailedFunc on_failed,
 			const IsDebugMode& is_debug_mode = IsDebugMode(false)) -> Ptr {
-		return Ptr(new Connection(
+		auto new_connection = Ptr(new Connection(
 			socket, buffer_size, on_received, on_peer_closed, on_failed, is_debug_mode));
+		std::cout << "connection created " 
+			<< new_connection.get() << std::endl; 
+		return new_connection;
 	}
 
 	~Connection(){
@@ -70,7 +73,6 @@ private:
 		on_failed(on_failed),
 		is_debug_mode(is_debug_mode){
 	
-		std::cout << "connection created" << std::endl; 
 	}
 
 public:
@@ -168,6 +170,7 @@ private:
 		}
 		else{
 			message_body_and_function.GetOnFailedFunc()(ErrorCode(error_code));	
+			this->DoClose();
 		}
 	}
 
@@ -352,13 +355,18 @@ private:
 
 public:
 	auto Close() -> void {
-		this->socket->GetRawSocketRef().get_io_service().dispatch(
+		/*
+		this->socket->GetRawSocketRef().get_io_service().post(
 			boost::bind(&Connection::DoClose, this->shared_from_this()));	
+		*/
+		boost::system::error_code ec;
+		this->socket->GetRawSocketRef().shutdown(
+			boost::asio::ip::tcp::socket::shutdown_send, ec);
 	}
 
 private:
 	auto DoClose() -> void {
-		std::cout << "Connection::DoClose called." << std::endl;
+		std::cout << "Connection" << this->shared_from_this().get() << "::DoClose called." << std::endl;
 		this->socket->GetRawSocketRef().close();	
 	}
 

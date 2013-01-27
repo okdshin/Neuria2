@@ -17,9 +17,13 @@ public:
 	}
 
 	auto Remove(Connection::Ptr connection) -> void {
-		this->connection_pool.erase(
+			
+		const auto iter = 
 			find(this->connection_pool.begin(), this->connection_pool.end(), 
-				connection));
+				connection);
+		if(iter != this->connection_pool.end()){
+			this->connection_pool.erase(iter);
+		}
 	}
 
 	auto At(unsigned int i)const -> Connection::Ptr {
@@ -45,9 +49,10 @@ auto operator<<(std::ostream& os,
 		ConnectionPool connection_pool) -> std::ostream& {
 	os << "ConnectionPool:" << connection_pool.Size() << "{";
 	connection_pool.ForEach([&os](Connection::Ptr connection){
-		os << boost::format("%1%:%2%, ") 
+		os << boost::format("%3%%1%:%2%, ") 
 			% connection->GetRemoteHostName().ToString()
-			% connection->GetRemotePortNumber().ToInt();
+			% connection->GetRemotePortNumber().ToInt()
+			% connection.get();
 	});
 	os << "}";
 	return os;
