@@ -12,15 +12,16 @@ public:
     ErrorCode(const boost::system::error_code& ec) : message(ec.message()){}
     ErrorCode(std::string message) : message(message){}
 	
-	auto operator<<(std::ostream& os)const -> std::ostream& {
-		os << this->message;
-		return os;
-	}
+	friend auto operator<<(std::ostream& os, const ErrorCode& error_code) -> std::ostream&;
 
 private:
 	std::string message;
 
 };
 
+auto operator<<(std::ostream& os, const ErrorCode& error_code) -> std::ostream& {
+	os << error_code.message;
+	return os;
+}
 }
 }
