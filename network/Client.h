@@ -24,6 +24,10 @@ public:
 		auto query = boost::asio::ip::tcp::resolver::query(
 			host_name.ToString(), port_num.ToString());
 		auto endpoint_iter = resolver.resolve(query);
+		if(endpoint_iter == boost::asio::ip::tcp::resolver::iterator()){
+			on_failed(ErrorCode("name resolve failed."));
+			return;	
+		}
 		auto new_socket = Socket::Create(this->io_service);
 		boost::asio::async_connect(
 			new_socket->GetRawSocketRef(), endpoint_iter, boost::bind(

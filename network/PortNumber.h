@@ -20,7 +20,11 @@ public:
 	}
 private:
 	int port_num;
-
 };
+
+auto operator<<(std::ostream& os, const PortNumber& port_num) -> std::ostream& {
+	os << "PortNumber:" << port_num.ToInt();
+	return os;
+}
 }
 }

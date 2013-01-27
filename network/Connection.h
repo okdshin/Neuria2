@@ -3,6 +3,7 @@
 #include <iostream>
 #include <deque>
 #include <boost/function.hpp>
+#include <boost/format.hpp>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include "Socket.h"
@@ -14,6 +15,7 @@
 #include "OnSendedFunc.h"
 #include "OnFailedFunc.h"
 #include "OnReceivedFunc.h"
+#include "IsDebugMode.h"
 namespace neuria{
 namespace network
 {
@@ -43,9 +45,14 @@ public:
 			const BufferSize& buffer_size, 
 			OnReceivedFunc on_received, 
 			OnPeerClosedFunc on_peer_closed, 
-			OnFailedFunc on_failed) -> Ptr {
+			OnFailedFunc on_failed,
+			const IsDebugMode& is_debug_mode = IsDebugMode(false)) -> Ptr {
 		return Ptr(new Connection(
-			socket, buffer_size, on_received, on_peer_closed, on_failed));
+			socket, buffer_size, on_received, on_peer_closed, on_failed, is_debug_mode));
+	}
+
+	~Connection(){
+		std::cout << "connection deleted" << std::endl;	
 	}
 
 private:
@@ -54,12 +61,26 @@ private:
 			const BufferSize& buffer_size,
 			OnReceivedFunc on_received, 
 			OnPeerClosedFunc on_peer_closed, 
-			OnFailedFunc on_failed)
+			OnFailedFunc on_failed,
+			const IsDebugMode& is_debug_mode)
 		:socket(socket), 
 		received_part_of_byte_array(buffer_size.ToInt()),
 		on_received(on_received), 
 		on_peer_closed(on_peer_closed), 
-		on_failed(on_failed){}
+		on_failed(on_failed),
+		is_debug_mode(is_debug_mode){
+	
+		std::cout << "connection created" << std::endl; 
+	}
+
+public:
+	auto GetRemoteHostName()const -> HostName {
+		return this->socket->GetRemoteHostName();
+	}
+
+	auto GetRemotePortNumber()const -> PortNumber {
+		return this->socket->GetRemotePortNumber();
+	}
 
 private:
 	class MessageBodyAndFunction {
@@ -100,6 +121,7 @@ private:
 	OnPeerClosedFunc on_peer_closed; 
 	OnFailedFunc on_failed;
 
+	IsDebugMode is_debug_mode;
 public:
 	auto Send(
 			const ByteArray& byte_array, 
@@ -120,8 +142,10 @@ private:
 		const auto body = message_body_and_function_queue.front().GetMessageBody();
 		const auto header = CreateMessageHeaderFromBody(body);
 		const auto message = Message(header, body);
-		std::cout << "Sended:";
-		OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
+		if(is_debug_mode()){
+			std::cout << "Sended:";
+			OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
+		}
 		boost::asio::async_write(
 			this->socket->GetRawSocketRef(), 
 			boost::asio::buffer(message.ToByteArray()),
@@ -149,14 +173,19 @@ private:
 
 public:
 	auto StartReceive() -> void {
-		std::cout << "StartReceive" << std::endl;
+		if(this->is_debug_mode()){
+			std::cout << "StartReceive" << std::endl;
+		}
 		ReceiveHeader();	
 	}
 private:
 
 	auto ReceiveHeader() -> void {
-		std::cout << "ReceiveHeader" << std::endl;
-		OutputByteArray(std::cout << "\t:", this->received_byte_array) << std::endl;
+		if(this->is_debug_mode()){
+			std::cout << "ReceiveHeader" << std::endl;
+			OutputByteArray(std::cout << 
+				"\t:", this->received_byte_array) << std::endl;
+		}
 		this->socket->GetRawSocketRef().async_read_some(
 			boost::asio::buffer(this->received_part_of_byte_array),
 			boost::bind(
@@ -171,7 +200,9 @@ private:
 	auto AppendPartOfHeaderByteArray(
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
-		std::cout << "AppendPartOfHeaderByteArray" << std::endl;
+		if(this->is_debug_mode()){
+			std::cout << "AppendPartOfHeaderByteArray" << std::endl;
+		}
 		if(!error_code)	{
 			assert(bytes_transferred != 0);
 			std::copy(
@@ -186,7 +217,9 @@ private:
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
-				std::cout << "peer socket closed." << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "peer socket closed." << std::endl;
+				}
 			}
 		}
 	}
@@ -194,15 +227,21 @@ private:
 	auto CheckIsEnableParseHeader(
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
-		std::cout << "CheckIsEnableParseHeader" << std::endl;
+		if(this->is_debug_mode()){
+			std::cout << "CheckIsEnableParseHeader" << std::endl;
+		}
 		if(!error_code)	{
 			if(MessageHeader::IsEnableParse(this->received_byte_array)){
-				std::cout << "\t-> true" << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "\t-> true" << std::endl;
+				}
 				this->header = MessageHeader::Parse(this->received_byte_array);
 				CheckIsReceivedWholeMessageByteArray(error_code, bytes_transferred);
 			}
 			else{
-				std::cout << "\t-> false" << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "\t-> false" << std::endl;
+				}
 				ReceiveHeader();	
 			}
 		}
@@ -211,14 +250,18 @@ private:
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
-				std::cout << "peer socket closed." << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "peer socket closed." << std::endl;
+				}
 			}
 		}
 	}
 
 	auto ReceiveBody() -> void {
-		std::cout << "ReceiveBody" << std::endl;
-		OutputByteArray(std::cout << "\t:", this->received_byte_array) << std::endl;
+		if(this->is_debug_mode()){
+			std::cout << "ReceiveBody" << std::endl;
+			OutputByteArray(std::cout << "\t:", this->received_byte_array) << std::endl;
+		}
 		this->socket->GetRawSocketRef().async_read_some(
 			boost::asio::buffer(this->received_part_of_byte_array),
 			boost::bind(&Connection::AppendPartOfBodyByteArray,
@@ -233,7 +276,9 @@ private:
 	auto AppendPartOfBodyByteArray(
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
-		std::cout << "AppendPartOfBodyByteArray" << std::endl;
+		if(this->is_debug_mode()){
+			std::cout << "AppendPartOfBodyByteArray" << std::endl;
+		}
 		if(!error_code){
 			std::copy(
 				this->received_part_of_byte_array.begin(), 
@@ -247,7 +292,9 @@ private:
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
-				std::cout << "peer socket closed." << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "peer socket closed." << std::endl;
+				}
 			}
 		}
 	}
@@ -255,11 +302,15 @@ private:
 	auto CheckIsReceivedWholeMessageByteArray(
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
-		std::cout << "CheckIsReceivedWholeMessageByteArray" << std::endl;
+		if(this->is_debug_mode()){
+			std::cout << "CheckIsReceivedWholeMessageByteArray" << std::endl;
+		}
 		if(!error_code){
 			if(IsWholeMessageByteArrayReceived(
 					this->header, this->received_byte_array)){
-				std::cout << "\t-> true" << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "\t-> true" << std::endl;
+				}
 				ByteArray message_body;
 				std::copy(
 					this->received_byte_array.begin() + this->header.GetHeaderSize(),
@@ -280,7 +331,9 @@ private:
 				CheckIsEnableParseHeader(error_code, bytes_transferred);
 			}
 			else { //まだ全部受信できてない場合
-				std::cout << "\t-> false" << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "\t-> false" << std::endl;
+				}
 				ReceiveBody();
 			}
 		}
@@ -289,7 +342,9 @@ private:
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
-				std::cout << "peer socket closed." << std::endl;
+				if(this->is_debug_mode()){
+					std::cout << "peer socket closed." << std::endl;
+				}
 			}
 		}
 		
@@ -297,7 +352,7 @@ private:
 
 public:
 	auto Close() -> void {
-		this->socket->GetRawSocketRef().get_io_service().post(
+		this->socket->GetRawSocketRef().get_io_service().dispatch(
 			boost::bind(&Connection::DoClose, this->shared_from_this()));	
 	}
 
@@ -309,5 +364,13 @@ private:
 
 
 };
+
+auto operator<<(std::ostream& os, const Connection::Ptr& connection) -> std::ostream& {
+	os << boost::format("Connection:%1%:%2%")
+		% connection->GetRemoteHostName().ToString()
+		% connection->GetRemotePortNumber().ToInt()
+	;
+	return os;
+}
 }
 }

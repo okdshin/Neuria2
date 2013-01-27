@@ -3,25 +3,25 @@
 #include <iostream>
 #include <string>
 #include <boost/thread.hpp>
-#include "InteractiveConnection.h"
-#include "OnPeerClosedFunc.h"
+#include "Connection.h"
 #include "OnFailedFunc.h"
 
-using namespace network;
+using namespace neuria;
+using namespace neuria::network;
 
 int main(int argc, char* argv[])
 {
 	auto io_service = IoService::Create();
 	boost::asio::io_service::work w(io_service->GetRawIoServiceRef());
 	Client client(io_service);
-	InteractiveConnection::Ptr connection;	
+	Connection::Ptr connection;	
 	client.Connect(HostName("localhost"), PortNumber(54322),
 		OnConnectedFunc([&connection](Socket::Ptr socket){
-			connection = InteractiveConnection::Create(
+			connection = Connection::Create(
 				socket, 
 				BufferSize(256),
 				OnReceivedFunc(), 
-				OnPeerClosedFunc(), 
+				Connection::OnPeerClosedFunc(), 
 				OnFailedFunc()
 			);
 			connection->StartReceive();

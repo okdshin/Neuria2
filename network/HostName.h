@@ -30,21 +30,9 @@ private:
 	std::string host_name_str;
 };
 auto operator<<(std::ostream& os, const HostName& host_name) -> std::ostream& {
-	os << host_name.ToString();
+	os << "HostName:" << host_name.ToString();
 	return os;
 }
 }
-/*
-auto ExtractHostNameAndPort(
-		const NodeId& src_node_id, 
-		HostName& dst_host_name,
-		PortNumber& dst_port_num) -> void {
-	std::vector<std::string> splitted;
-	auto str = src_node_id.ToString();
-	boost::algorithm::split(splitted, str, boost::is_any_of(":"));
-	dst_host_name = HostName(splitted.at(0));
-	dst_port_num = PortNumber(boost::lexical_cast<int>(splitted.at(1)));
-}
-*/
 }
 

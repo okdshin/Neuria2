@@ -3,6 +3,8 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include "IoService.h"
+#include "HostName.h"
+#include "PortNumber.h"
 namespace neuria{
 namespace network
 {
@@ -13,8 +15,17 @@ public:
 		std::cout << "SocketCreated!" << std::endl;	
 		return Ptr(new Socket(io_service));
 	}
+
 	auto GetRawSocketRef() -> boost::asio::ip::tcp::socket& {
 		return this->raw_socket;
+	}
+
+	auto GetRemoteHostName()const -> HostName {
+		return HostName(this->raw_socket.remote_endpoint().address().to_string());	
+	}
+
+	auto GetRemotePortNumber()const -> PortNumber {
+		return PortNumber(this->raw_socket.remote_endpoint().port());	
 	}
 
 	~Socket(){

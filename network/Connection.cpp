@@ -27,13 +27,15 @@ int main(int argc, char* argv[])
 	auto connection = Connection::Create(socket, BufferSize(256),
 		OnReceivedFunc(),
 		Connection::OnPeerClosedFunc(),
-		OnFailedFunc()
+		OnFailedFunc(),
+		IsDebugMode(true)
 	);
 	connection->StartReceive();
 	boost::thread t([io_service](){
 		io_service->GetRawIoServiceRef().run();
 	});
 
+	std::cout << connection << std::endl;
 	std::string message_str;
 	while(true){
 		std::cin >> message_str;
