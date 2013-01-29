@@ -12,11 +12,11 @@ public:
     ConnectionPool(){}
     ~ConnectionPool(){}
 
-	auto Add(Connection::Ptr connection) -> void {
+	auto Add(const Connection::Ptr& connection) -> void {
 		this->connection_pool.push_back(connection);
 	}
 
-	auto Remove(Connection::Ptr connection) -> void {
+	auto Remove(const Connection::Ptr& connection) -> void {
 			
 		const auto iter = 
 			find(this->connection_pool.begin(), this->connection_pool.end(), 
@@ -34,7 +34,7 @@ public:
 		return this->connection_pool.size();	
 	}
 
-	auto ForEach(boost::function<void (Connection::Ptr)> func)const -> void {
+	auto ForEach(boost::function<void (const Connection::Ptr&)> func)const -> void {
 		for(const auto connection : this->connection_pool){
 			func(connection);
 		}
@@ -48,7 +48,7 @@ private:
 auto operator<<(std::ostream& os, 
 		ConnectionPool connection_pool) -> std::ostream& {
 	os << "ConnectionPool:" << connection_pool.Size() << "{";
-	connection_pool.ForEach([&os](Connection::Ptr connection){
+	connection_pool.ForEach([&os](const Connection::Ptr& connection){
 		os << boost::format("%3%%1%:%2%, ") 
 			% connection->GetRemoteHostName().ToString()
 			% connection->GetRemotePortNumber().ToInt()

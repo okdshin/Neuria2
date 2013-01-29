@@ -25,7 +25,7 @@ public:
 	using Ptr = boost::shared_ptr<Connection>;
 	class OnPeerClosedFunc{
 	public:
-		OnPeerClosedFunc():on_peer_closed([](Ptr){
+		OnPeerClosedFunc():on_peer_closed([](const Ptr&){
 				std::cout << "Called(Default)OnPeerClosedFunc" << std::endl;
 			
 			}){}
