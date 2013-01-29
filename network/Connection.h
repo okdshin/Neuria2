@@ -129,33 +129,40 @@ public:
 			const ByteArray& byte_array, 
 			OnSendedFunc on_sended, 
 			OnFailedFunc on_failed) -> void {
+		this->socket->GetRawSocketRef().get_io_service().post(
+			boost::bind(&Connection::DoSend, this->shared_from_this(),
+				byte_array, on_sended, on_failed)
+		);
+	}
+
+private:
+	auto DoSend(
+			ByteArray byte_array, 
+			OnSendedFunc on_sended, 
+			OnFailedFunc on_failed) -> void {
+		bool is_send_in_progress = !this->message_body_and_function_queue.empty();
 		this->message_body_and_function_queue.push_back(
 			MessageBodyAndFunction(
 				MessageBody(byte_array), 
 				on_sended, 
 				on_failed));
-		if(this->message_body_and_function_queue.size() == 1){ //start new
-			StartSend();	
+		if(!is_send_in_progress){ //start new
+			const auto body = message_body_and_function_queue.front().GetMessageBody();
+			const auto header = CreateMessageHeaderFromBody(body);
+			const auto message = Message(header, body);
+			if(is_debug_mode()){
+				std::cout << "Sended:";
+				OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
+			}
+			boost::asio::async_write(
+				this->socket->GetRawSocketRef(), 
+				boost::asio::buffer(message.ToByteArray()),
+				boost::bind(&Connection::OnSended, this->shared_from_this(), 
+					message_body_and_function_queue.front(),
+					boost::asio::placeholders::error
+				)
+			);
 		}
-	}
-
-private:
-	auto StartSend() -> void {
-		const auto body = message_body_and_function_queue.front().GetMessageBody();
-		const auto header = CreateMessageHeaderFromBody(body);
-		const auto message = Message(header, body);
-		if(is_debug_mode()){
-			std::cout << "Sended:";
-			OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
-		}
-		boost::asio::async_write(
-			this->socket->GetRawSocketRef(), 
-			boost::asio::buffer(message.ToByteArray()),
-			boost::bind(&Connection::OnSended, this->shared_from_this(), 
-				message_body_and_function_queue.front(),
-				boost::asio::placeholders::error
-			)
-		);
 	}
 
 	auto OnSended(
@@ -165,7 +172,22 @@ private:
 			this->message_body_and_function_queue.pop_front();
 			message_body_and_function.GetOnSendedFunc()();
 			if(!this->message_body_and_function_queue.empty()){
-				this->StartSend();		
+				const auto body = 
+					message_body_and_function_queue.front().GetMessageBody();
+				const auto header = CreateMessageHeaderFromBody(body);
+				const auto message = Message(header, body);
+				if(is_debug_mode()){
+					std::cout << "Sended:";
+					OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
+				}
+				boost::asio::async_write(
+					this->socket->GetRawSocketRef(), 
+					boost::asio::buffer(message.ToByteArray()),
+					boost::bind(&Connection::OnSended, this->shared_from_this(), 
+						message_body_and_function_queue.front(),
+						boost::asio::placeholders::error
+					)
+				);
 			}
 		}
 		else{
@@ -312,6 +334,10 @@ private:
 			if(IsWholeMessageByteArrayReceived(
 					this->header, this->received_byte_array)){
 				if(this->is_debug_mode()){
+					std::cout << boost::format("need size:%1%, current size:%2%")
+						% this->header.GetBodySize()
+						% this->received_byte_array.size()
+					<< std::endl;
 					std::cout << "\t-> true" << std::endl;
 				}
 				ByteArray message_body;
