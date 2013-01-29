@@ -46,7 +46,7 @@ public:
 			OnReceivedFunc on_received, 
 			OnPeerClosedFunc on_peer_closed, 
 			OnFailedFunc on_failed,
-			const IsDebugMode& is_debug_mode = IsDebugMode(false)) -> Ptr {
+			const IsDebugMode& is_debug_mode = IsDebugMode(true)) -> Ptr {
 		auto new_connection = Ptr(new Connection(
 			socket, buffer_size, on_received, on_peer_closed, on_failed, is_debug_mode));
 		std::cout << "connection created " 
