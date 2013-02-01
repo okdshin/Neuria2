@@ -140,8 +140,8 @@ private:
 public:
 	auto Send(
 			const ByteArray& byte_array, 
-			OnSendedFunc on_sended, 
-			OnFailedFunc on_failed) -> void {
+			const OnSendedFunc& on_sended, 
+			const OnFailedFunc& on_failed) -> void {
 		this->socket->GetRawSocketRef().get_io_service().post(
 			boost::bind(&Connection::DoSend, this->shared_from_this(),
 				byte_array, on_sended, on_failed)
@@ -159,11 +159,12 @@ private:
 				MessageBody(byte_array), 
 				on_sended, 
 				on_failed));
+
 		if(!is_send_in_progress){ //start new
 			const auto message_body_and_function = 
 				message_body_and_function_queue.front();
-			assert(message_body_and_function != nullptr);
-			assert(message_body_and_function.get() != nullptr);
+			assert(message_body_and_function != 0);
+			assert(message_body_and_function.get() != 0);
 			const auto body = 
 				message_body_and_function->GetMessageBody();
 			const auto header = CreateMessageHeaderFromBody(body);
