@@ -102,7 +102,7 @@ public:
 			const ByteArray& byte_array, 
 			const OnSendedFunc& on_sended, 
 			const OnFailedFunc& on_failed) -> void {
-		this->socket->GetRawSocketRef().get_io_service().post(
+		this->socket->GetRawSocketRef().get_io_service().dispatch(
 			boost::bind(&Connection::DoSend, this->shared_from_this(),
 				byte_array, on_sended, on_failed)
 		);
@@ -302,9 +302,14 @@ private:
 					std::back_inserter(message_body)
 				);
 
-				//post/dispatchするべきか？
-				on_received(message_body);
-			
+				try{
+					//post/dispatchするべきか？
+					on_received(message_body);
+				}
+				catch(...){
+					this->DoClose();
+				}
+
 				this->received_byte_array.erase(
 					this->received_byte_array.begin(),
 					this->received_byte_array.begin() + this->header.GetHeaderSize()	
