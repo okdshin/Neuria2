@@ -86,10 +86,39 @@ public:
 	}
 
 private:
+	class ByteArrayAndFunctions {
+	public:
+		ByteArrayAndFunctions(){}	
+		ByteArrayAndFunctions(
+			const ByteArray& byte_array,
+			const OnSendedFunc& on_sended,
+			const OnFailedFunc& on_failed)
+		:byte_array(byte_array),
+		on_sended(on_sended),
+		on_failed(on_failed){}	
+
+		auto GetByteArray()const -> ByteArray {
+			return this->byte_array;	
+		}
+
+		auto CallOnSendedFunc() -> void {
+			this->on_sended();	
+		}
+
+		auto CallOnFailedFunc(const ErrorCode& error_code) -> void {
+			this->on_failed(error_code);
+		}
+
+	public:
+		ByteArray byte_array;
+		OnSendedFunc on_sended;
+		OnFailedFunc on_failed;
+	};
+
 	Socket::Ptr socket;
 	boost::asio::io_service::strand send_strand;
 	
-	std::deque<ByteArray> send_queue;
+	std::deque<ByteArrayAndFunctions> send_queue;
 
 	ByteArray received_part_of_byte_array;
 	ByteArray received_byte_array;
@@ -115,18 +144,20 @@ public:
 private:
 	auto ReserveToSend(
 			const ByteArray& byte_array, 
-			OnSendedFunc on_sended, 
-			OnFailedFunc on_failed) -> void {
+			const OnSendedFunc& on_sended, 
+			const OnFailedFunc& on_failed) -> void {
 		const auto body = byte_array;
 		const auto header = CreateMessageHeaderFromBody(body);
 		const auto message = Message(header, body);
-		
-		this->send_queue.push_back(message.ToByteArray());
+	
+		const auto byte_array_and_functions = 
+			ByteArrayAndFunctions(message.ToByteArray(), on_sended, on_failed);
+		this->send_queue.push_back(byte_array_and_functions);
 
 		if(this->send_queue.size() > 1){
 			return;
 		}
-		this->DoSend(on_sended, on_failed);
+		this->DoSend(byte_array_and_on_sende);
 	}
 
 	auto DoSend(
@@ -149,7 +180,7 @@ private:
 			const boost::system::error_code& error_code) -> void {
 		if(error_code){
 			on_failed(ErrorCode(error_code));	
-			this->/*Do*/Close();
+			this->Close();
 		}
 		
 		if(is_debug_mode()){
