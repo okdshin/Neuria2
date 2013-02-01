@@ -107,29 +107,30 @@ public:
 			const OnSendedFunc& on_sended, 
 			const OnFailedFunc& on_failed) -> void {
 		this->send_strand.post(
-			boost::bind(&Connection::DoSend, this->shared_from_this(),
+			boost::bind(&Connection::ReserveToSend, this->shared_from_this(),
 				byte_array, on_sended, on_failed)
 		);
 	}
 
 private:
-	auto DoSend(
+	auto ReserveToSend(
 			const ByteArray& byte_array, 
 			OnSendedFunc on_sended, 
 			OnFailedFunc on_failed) -> void {
 		const auto body = byte_array;
 		const auto header = CreateMessageHeaderFromBody(body);
 		const auto message = Message(header, body);
-		/*
-		auto send_byte_array 
-			= boost::shared_ptr<ByteArray>(new ByteArray(message.ToByteArray()));
-		*/
+		
 		this->send_queue.push_back(message.ToByteArray());
 
 		if(this->send_queue.size() > 1){
 			return;
 		}
+		this->DoSend(on_sended, on_failed);
+	}
 
+	auto DoSend(
+			const OnSendedFunc& on_sended, const OnFailedFunc& on_failed) -> void {
 		boost::asio::async_write(
 			this->socket->GetRawSocketRef(), 
 			boost::asio::buffer(this->send_queue.front()),
@@ -159,17 +160,7 @@ private:
 		this->send_queue.pop_front();
 		on_sended();
 		if(!this->send_queue.empty()){
-			boost::asio::async_write(
-				this->socket->GetRawSocketRef(), 
-				boost::asio::buffer(this->send_queue.front()),
-				this->send_strand.wrap(
-					boost::bind(
-						&Connection::OnSended, this->shared_from_this(), 
-						on_sended, on_failed,
-						boost::asio::placeholders::error
-					)
-				)
-			);
+			this->DoSend(on_sended, on_failed);
 		}
 	}
 
