@@ -67,6 +67,7 @@ private:
 			OnFailedFunc on_failed,
 			const IsDebugMode& is_debug_mode)
 		:socket(socket), 
+		send_strand(socket->GetRawSocketRef().get_io_service()),
 		received_part_of_byte_array(buffer_size.ToInt()),
 		on_received(on_received), 
 		on_peer_closed(on_peer_closed), 
@@ -86,6 +87,7 @@ public:
 
 private:
 	Socket::Ptr socket;
+	boost::asio::io_service::strand send_strand;
 
 	ByteArray received_part_of_byte_array;
 	ByteArray received_byte_array;
@@ -102,7 +104,7 @@ public:
 			const ByteArray& byte_array, 
 			const OnSendedFunc& on_sended, 
 			const OnFailedFunc& on_failed) -> void {
-		this->socket->GetRawSocketRef().get_io_service().dispatch(
+		this->socket->GetRawSocketRef().get_io_service().post(
 			boost::bind(&Connection::DoSend, this->shared_from_this(),
 				byte_array, on_sended, on_failed)
 		);
@@ -125,10 +127,13 @@ private:
 		boost::asio::async_write(
 			this->socket->GetRawSocketRef(), 
 			boost::asio::buffer(*send_byte_array),
-			boost::bind(&Connection::OnSended, this->shared_from_this(), 
-				on_sended, on_failed,
-				boost::asio::placeholders::error,
-				send_byte_array
+			this->send_strand.wrap(
+				boost::bind(
+					&Connection::OnSended, this->shared_from_this(), 
+					on_sended, on_failed,
+					boost::asio::placeholders::error,
+					send_byte_array
+				)
 			)
 		);
 	}
@@ -146,7 +151,7 @@ private:
 		}
 		else{
 			on_failed(ErrorCode(error_code));	
-			this->DoClose();
+			this->/*Do*/Close();
 		}
 	}
 
@@ -192,7 +197,7 @@ private:
 			CheckIsEnableParseHeader(error_code, bytes_transferred);
 		}
 		else {
-			this->DoClose();
+			this->/*Do*/Close();
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
@@ -225,7 +230,7 @@ private:
 			}
 		}
 		else {
-			this->DoClose();
+			this->/*Do*/Close();
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
@@ -267,7 +272,7 @@ private:
 			CheckIsReceivedWholeMessageByteArray(error_code, bytes_transferred);
 		}
 		else { 
-			this->DoClose();		
+			this->/*Do*/Close();		
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
@@ -307,7 +312,7 @@ private:
 					on_received(message_body);
 				}
 				catch(...){
-					this->DoClose();
+					this->/*Do*/Close();
 				}
 
 				this->received_byte_array.erase(
@@ -326,7 +331,7 @@ private:
 			}
 		}
 		else { 
-			this->DoClose();		
+			this->/*Do*/Close();		
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
