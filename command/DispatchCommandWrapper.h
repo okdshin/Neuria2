@@ -20,11 +20,18 @@ public:
 		: command_id_str(command_id.ToString()), byte_array(byte_array){}
 
 	static auto Parse(const ByteArray& byte_array) -> DispatchCommandWrapper {
-		std::stringstream ss(CreateStringFromByteArray(byte_array));
-		boost::archive::text_iarchive ia(ss);
-		auto command = DispatchCommandWrapper();
-		ia >> command;
-		return command;
+		try{
+			std::stringstream ss(CreateStringFromByteArray(byte_array));
+			boost::archive::text_iarchive ia(ss);
+			auto command = DispatchCommandWrapper();
+			ia >> command;
+			return command;
+		}catch(const std::exception& e){
+			std::cout << "DispatchCommandWrapper Parse Error!!\n" 
+				<< e.what() << "\n" << CreateStringFromByteArray(byte_array) 
+				<< std::endl;
+			throw;	
+		}
 	}
 	
 	auto Serialize()const -> ByteArray {

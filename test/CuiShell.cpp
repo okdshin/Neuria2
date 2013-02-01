@@ -14,6 +14,7 @@ int main(int argc, char* argv[])
 			std::cout << "call broadcast." << std::endl;
 			for(const auto& arg : arg_list){
 				std::cout << arg << std::endl;	
+				std::cout << boost::lexical_cast<int>(arg) << std::endl;	
 			}
 		}));
 	shell.Start();

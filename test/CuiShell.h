@@ -47,6 +47,10 @@ public:
 		catch(const std::out_of_range&){
 			this->os << "too few argument. please check." << std::endl;	
 		}
+		catch(const boost::bad_lexical_cast& e){
+			this->os << boost::format("invalid arguments(%1%)") 
+				% e.what() << std::endl;
+		}
 		
 	}
 

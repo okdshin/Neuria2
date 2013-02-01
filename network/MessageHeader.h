@@ -59,6 +59,7 @@ public:
 	}
 
 	static auto Parse(const ByteArray& byte_array) -> MessageHeader {
+		try{
 		assert(IsEnableParse(byte_array));
 		uint8_t first_byte = byte_array.front();
 		ByteArraySize body_size;
@@ -91,6 +92,10 @@ public:
 		}
 		auto command = MessageHeader(body_size);
 		return command;	
+		}catch(...){
+			std::cout << "MessageHeader Parse Error!!"	<< std::endl;
+			throw;
+		}
 	}
 
 	auto Serialize() const -> ByteArray {

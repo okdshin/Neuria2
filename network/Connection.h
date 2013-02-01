@@ -87,13 +87,14 @@ public:
 private:
 	class MessageBodyAndFunction {
 	public:
-		MessageBodyAndFunction(
+		using Ptr = boost::shared_ptr<MessageBodyAndFunction>;
+		static auto Create(
 				const MessageBody& message_body, 
 				OnSendedFunc on_sended, 
-				OnFailedFunc on_failed):
-			message_body(message_body), 
-			on_sended(on_sended), 
-			on_failed(on_failed){}
+				OnFailedFunc on_failed) -> Ptr {
+			return Ptr(
+				new MessageBodyAndFunction(message_body, on_sended, on_failed));	
+		}
 
 		auto GetMessageBody() -> MessageBody {
 			return this->message_body;	
@@ -106,7 +107,16 @@ private:
 		auto GetOnFailedFunc()const -> OnFailedFunc {
 			return this->on_failed;
 		}
+
 	private:
+		MessageBodyAndFunction(
+				const MessageBody& message_body, 
+				OnSendedFunc on_sended, 
+				OnFailedFunc on_failed):
+			message_body(message_body), 
+			on_sended(on_sended), 
+			on_failed(on_failed){}
+
 		MessageBody message_body;
 		OnSendedFunc on_sended;
 		OnFailedFunc on_failed;
@@ -114,7 +124,10 @@ private:
 
 private:
 	Socket::Ptr socket;
-	std::deque<MessageBodyAndFunction> message_body_and_function_queue;
+	std::deque<MessageBodyAndFunction::Ptr> message_body_and_function_queue;
+	//Message //send_message;
+	//だめだった。送受信バッファを直接持たないといけないようだ。
+
 	ByteArray received_part_of_byte_array;
 	ByteArray received_byte_array;
 	MessageHeader header;
@@ -142,56 +155,68 @@ private:
 			OnFailedFunc on_failed) -> void {
 		bool is_send_in_progress = !this->message_body_and_function_queue.empty();
 		this->message_body_and_function_queue.push_back(
-			MessageBodyAndFunction(
+			MessageBodyAndFunction::Create(
 				MessageBody(byte_array), 
 				on_sended, 
 				on_failed));
 		if(!is_send_in_progress){ //start new
-			const auto body = message_body_and_function_queue.front().GetMessageBody();
+			const auto message_body_and_function = 
+				message_body_and_function_queue.front();
+			assert(message_body_and_function != nullptr);
+			assert(message_body_and_function.get() != nullptr);
+			const auto body = 
+				message_body_and_function->GetMessageBody();
 			const auto header = CreateMessageHeaderFromBody(body);
 			const auto message = Message(header, body);
+			auto send_byte_array 
+				= boost::shared_ptr<ByteArray>(new ByteArray(message.ToByteArray()));
 			if(is_debug_mode()){
 				std::cout << "Sended:";
 				OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
 			}
 			boost::asio::async_write(
 				this->socket->GetRawSocketRef(), 
-				boost::asio::buffer(message.ToByteArray()),
+				boost::asio::buffer(*send_byte_array),
 				boost::bind(&Connection::OnSended, this->shared_from_this(), 
 					message_body_and_function_queue.front(),
-					boost::asio::placeholders::error
+					boost::asio::placeholders::error,
+					send_byte_array
 				)
 			);
 		}
 	}
 
 	auto OnSended(
-			const MessageBodyAndFunction& message_body_and_function, 
-			const boost::system::error_code& error_code) -> void {
+			MessageBodyAndFunction::Ptr message_body_and_function, 
+			const boost::system::error_code& error_code,
+			boost::shared_ptr<ByteArray> alive_byte_array) -> void {
 		if(!error_code){
+			message_body_and_function->GetOnSendedFunc()();
 			this->message_body_and_function_queue.pop_front();
-			message_body_and_function.GetOnSendedFunc()();
 			if(!this->message_body_and_function_queue.empty()){
 				const auto body = 
-					message_body_and_function_queue.front().GetMessageBody();
+					message_body_and_function_queue.front()->GetMessageBody();
 				const auto header = CreateMessageHeaderFromBody(body);
 				const auto message = Message(header, body);
+				auto send_byte_array 
+					= boost::shared_ptr<ByteArray>(new ByteArray(message.ToByteArray()));
 				if(is_debug_mode()){
 					std::cout << "Sended:";
 					OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
 				}
 				boost::asio::async_write(
 					this->socket->GetRawSocketRef(), 
-					boost::asio::buffer(message.ToByteArray()),
+					boost::asio::buffer(*send_byte_array),
 					boost::bind(&Connection::OnSended, this->shared_from_this(), 
 						message_body_and_function_queue.front(),
-						boost::asio::placeholders::error
+						boost::asio::placeholders::error,
+						send_byte_array
 					)
 				);
 			}
 		}
 		else{
-			message_body_and_function.GetOnFailedFunc()(ErrorCode(error_code));	
+			message_body_and_function->GetOnFailedFunc()(ErrorCode(error_code));	
 			this->DoClose();
 		}
 	}

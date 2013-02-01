@@ -8,8 +8,8 @@ namespace network
 {
 class MessageBody{
 public:
+	MessageBody():byte_array(){}
     MessageBody(const ByteArray& byte_array) : byte_array(byte_array){}
-    ~MessageBody(){}
 
 	auto ToByteArray()const -> ByteArray {
 		return this->byte_array;	

@@ -9,6 +9,7 @@ namespace network
 {
 class Message{
 public:
+	Message():header(), body(){}
     Message(const MessageHeader& header, const MessageBody& body) 
 		: header(header), body(body){}
     ~Message(){}
