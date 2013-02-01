@@ -88,6 +88,8 @@ public:
 private:
 	Socket::Ptr socket;
 	boost::asio::io_service::strand send_strand;
+	
+	std::deque<ByteArray> send_queue;
 
 	ByteArray received_part_of_byte_array;
 	ByteArray received_byte_array;
@@ -104,7 +106,7 @@ public:
 			const ByteArray& byte_array, 
 			const OnSendedFunc& on_sended, 
 			const OnFailedFunc& on_failed) -> void {
-		this->socket->GetRawSocketRef().get_io_service().post(
+		this->send_strand.post(
 			boost::bind(&Connection::DoSend, this->shared_from_this(),
 				byte_array, on_sended, on_failed)
 		);
@@ -112,27 +114,30 @@ public:
 
 private:
 	auto DoSend(
-			ByteArray byte_array, 
+			const ByteArray& byte_array, 
 			OnSendedFunc on_sended, 
 			OnFailedFunc on_failed) -> void {
 		const auto body = byte_array;
 		const auto header = CreateMessageHeaderFromBody(body);
 		const auto message = Message(header, body);
+		/*
 		auto send_byte_array 
 			= boost::shared_ptr<ByteArray>(new ByteArray(message.ToByteArray()));
-		if(is_debug_mode()){
-			std::cout << "Sended:";
-			OutputByteArray(std::cout, message.ToByteArray()) << std::endl;
+		*/
+		this->send_queue.push_back(message.ToByteArray());
+
+		if(this->send_queue.size() > 1){
+			return;
 		}
+
 		boost::asio::async_write(
 			this->socket->GetRawSocketRef(), 
-			boost::asio::buffer(*send_byte_array),
+			boost::asio::buffer(this->send_queue.front()),
 			this->send_strand.wrap(
 				boost::bind(
 					&Connection::OnSended, this->shared_from_this(), 
 					on_sended, on_failed,
-					boost::asio::placeholders::error,
-					send_byte_array
+					boost::asio::placeholders::error
 				)
 			)
 		);
@@ -140,18 +145,31 @@ private:
 
 	auto OnSended(
 			OnSendedFunc on_sended, OnFailedFunc on_failed,
-			const boost::system::error_code& error_code,
-			boost::shared_ptr<ByteArray> alive_byte_array) -> void {
-		if(!error_code){
-			if(is_debug_mode()){
-				std::cout << "Sended:";
-				OutputByteArray(std::cout, *alive_byte_array) << std::endl;
-			}
-			on_sended();
-		}
-		else{
+			const boost::system::error_code& error_code) -> void {
+		if(error_code){
 			on_failed(ErrorCode(error_code));	
 			this->/*Do*/Close();
+		}
+		
+		if(is_debug_mode()){
+			std::cout << "Sended:";
+			OutputByteArray(std::cout, this->send_queue.front()) << std::endl;
+		}
+
+		this->send_queue.pop_front();
+		on_sended();
+		if(!this->send_queue.empty()){
+			boost::asio::async_write(
+				this->socket->GetRawSocketRef(), 
+				boost::asio::buffer(this->send_queue.front()),
+				this->send_strand.wrap(
+					boost::bind(
+						&Connection::OnSended, this->shared_from_this(), 
+						on_sended, on_failed,
+						boost::asio::placeholders::error
+					)
+				)
+			);
 		}
 	}
 
