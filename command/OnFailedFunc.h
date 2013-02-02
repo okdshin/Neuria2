@@ -8,21 +8,22 @@ namespace neuria{
 namespace command
 {
 class OnFailedFunc{
+private:
+	using FuncType = boost::function<void (const ErrorCode&)>;
 public:
 	OnFailedFunc()
 		:on_failed([](const ErrorCode& error_code){ 
-			std::cout << "Called(Default)OnFailedFunc:" /*<< error_code */<< std::endl;
+			std::cout << "Called(Default)OnFailedFunc:" << error_code << std::endl;
 		}){}
-    OnFailedFunc(boost::function<void (const ErrorCode&)> on_failed) 
+    OnFailedFunc(FuncType on_failed) 
 		: on_failed(on_failed){}
-    ~OnFailedFunc(){}
 
 	auto operator()(const ErrorCode& error_code) -> void {
 		on_failed(error_code);	
 	} 
 
 private:
-	boost::function<void (const ErrorCode&)> on_failed;
+	FuncType on_failed;
 
 };
 }

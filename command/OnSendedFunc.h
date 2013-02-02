@@ -4,7 +4,7 @@
 #include <boost/function.hpp>
 
 namespace neuria{
-namespace network
+namespace command
 {
 class OnSendedFunc{
 private:

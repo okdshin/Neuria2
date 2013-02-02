@@ -2,23 +2,28 @@
 //OnReceivedFunc:20130112
 #include <iostream>
 #include <boost/function.hpp>
-#include "ByteArray.h"
+#include "ByteArraySender.h"
 
 namespace neuria{
 namespace command
 {
 class OnReceivedFunc{
-public:
-	OnReceivedFunc():on_received([](const ByteArray&){}){}
-    OnReceivedFunc(boost::function<void (const ByteArray&)> on_received)
-		: on_received(on_received){}
-    ~OnReceivedFunc(){}
+private:
+	using FuncType = 
+		boost::function<void (const ByteArraySender&, const ByteArray&)>;
 
-	auto operator()(const ByteArray& byte_array) -> void {
-		on_received(byte_array);	
+public:
+    OnReceivedFunc() : on_received(
+		[](const ByteArraySender&, const ByteArray&){}){}
+    OnReceivedFunc(FuncType on_received) : on_received(on_received){}
+
+	auto operator()(
+			const ByteArraySender& sender, 
+			const ByteArray& received_byte_array) -> void {
+		on_received(sender, received_byte_array);	
 	}
 private:
-	boost::function<void (const ByteArray&)> on_received;
+	FuncType on_received;
 };
 }
 }

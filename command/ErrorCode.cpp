@@ -3,7 +3,7 @@
 #include <iostream>
 
 using namespace neuria;
-using namespace neuria::command;
+using namespace neuria::network;
 
 int main(int argc, char* argv[])
 {

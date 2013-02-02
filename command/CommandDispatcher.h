@@ -5,6 +5,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
+#include <boost/format.hpp>
 #include "DispatchCommandWrapper.h"
 #include "ByteArray.h"
 #include "AsyncExecuter.h"
@@ -21,22 +22,26 @@ public:
 		: async_executer(async_executer), on_failed(on_failed){}
 	
 	auto RegisterFunc(const CommandId& command_id, 
-			OnReceivedFunc func) -> void{
+			const OnReceivedFunc& func) -> void{
 		this->func_dict[command_id] = func;
 	}
 	
-	auto Dispatch(const ByteArray& byte_array) -> void {
-		auto command = command::DispatchCommandWrapper::Parse(byte_array);
-		std::cout << "command id:" 
-			<< command.GetCommandId().ToString() << std::endl;
+	auto Dispatch(
+			const ByteArraySender& sender, 
+			const ByteArray& received_byte_array) -> void {
+		auto command = command::DispatchCommandWrapper::Parse(received_byte_array);
+		std::cout << boost::format("command id:%1%")
+			% command.GetCommandId().ToString() 
+		<< std::endl;
 		if(this->func_dict.find(command.GetCommandId()) == this->func_dict.end()){
 			std::cout << command.GetCommandId().ToString() << std::endl;
 			this->on_failed(ErrorCode("InvalidCommandId"));
 		}
 		else{
 			this->async_executer(
-				[this, command](){
+				[this, sender, command](){
 					this->func_dict[command.GetCommandId()](
+						sender,
 						command.GetWrappedByteArray()
 					);
 				}

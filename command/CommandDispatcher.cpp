@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 	);
 	dispatcher.RegisterFunc(
 		CommandId("test_command_id"), 
-		OnReceivedFunc([](const ByteArray& byte_array){
+		OnReceivedFunc([](const ByteArraySender&, const ByteArray& byte_array){
 			std::cout << "1111" 
 				<< CreateStringFromByteArray(byte_array) << std::endl;
 			for(unsigned int i = 0; i < 10; ++i){
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 	);
 	dispatcher.RegisterFunc(
 		CommandId("test_command_id2"), 
-		OnReceivedFunc([](const ByteArray& byte_array){
+		OnReceivedFunc([](const ByteArraySender&, const ByteArray& byte_array){
 			std::cout << "2222" 
 				<< CreateStringFromByteArray(byte_array) << std::endl;
 			for(unsigned int i = 0; i < 10; ++i){
@@ -38,10 +38,9 @@ int main(int argc, char* argv[])
 		})
 	);
 	std::cout << dispatcher << std::endl;
-
-	dispatcher.Dispatch(
+	dispatcher.Dispatch(ByteArraySender(),
 		DispatchCommandWrapper(CommandId("test_command_id"), CreateByteArrayFromString("hello")).Serialize());
-	dispatcher.Dispatch(
+	dispatcher.Dispatch(ByteArraySender(),
 		DispatchCommandWrapper(CommandId("test_command_id2"), CreateByteArrayFromString("hello")).Serialize());
 	boost::thread t(boost::bind(&boost::asio::io_service::run, &io_service));
 	boost::thread t2(boost::bind(&boost::asio::io_service::run, &io_service));

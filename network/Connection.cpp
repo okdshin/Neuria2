@@ -25,12 +25,13 @@ int main(int argc, char* argv[])
 			connect_handle);
 
 	auto connection = Connection::Create(socket, BufferSize(256),
-		OnReceivedFunc(),
-		Connection::OnPeerClosedFunc(),
-		OnFailedFunc(),
 		IsDebugMode(true)
 	);
-	connection->StartReceive();
+	connection->StartReceive(
+		OnReceivedFunc(),
+		Connection::OnPeerClosedFunc(),
+		OnFailedFunc()
+	);
 	boost::thread t([io_service](){
 		io_service->GetRawIoServiceRef().run();
 	});

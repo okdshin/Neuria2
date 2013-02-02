@@ -2,7 +2,7 @@
 #include "DispatchCommandWrapper.h"
 #include <iostream>
 
-using namespace command;
+using namespace neuria::command;
 
 int main(int argc, char* argv[])
 {

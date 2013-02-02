@@ -16,6 +16,7 @@
 #include "OnFailedFunc.h"
 #include "OnReceivedFunc.h"
 #include "IsDebugMode.h"
+
 namespace neuria{
 namespace network
 {
@@ -43,12 +44,9 @@ public:
 	static auto Create(
 			Socket::Ptr socket, 
 			const BufferSize& buffer_size, 
-			OnReceivedFunc on_received, 
-			OnPeerClosedFunc on_peer_closed, 
-			OnFailedFunc on_failed,
-			const IsDebugMode& is_debug_mode = IsDebugMode(true)) -> Ptr {
+			const IsDebugMode& is_debug_mode = IsDebugMode(false)) -> Ptr {
 		auto new_connection = Ptr(new Connection(
-			socket, buffer_size, on_received, on_peer_closed, on_failed, is_debug_mode));
+			socket, buffer_size, is_debug_mode));
 		std::cout << "connection created " 
 			<< new_connection.get() << std::endl; 
 		return new_connection;
@@ -62,16 +60,10 @@ private:
 	Connection(
 			Socket::Ptr socket, 
 			const BufferSize& buffer_size,
-			OnReceivedFunc on_received, 
-			OnPeerClosedFunc on_peer_closed, 
-			OnFailedFunc on_failed,
 			const IsDebugMode& is_debug_mode)
 		:socket(socket), 
 		send_strand(socket->GetRawSocketRef().get_io_service()),
 		received_part_of_byte_array(buffer_size.ToInt()),
-		on_received(on_received), 
-		on_peer_closed(on_peer_closed), 
-		on_failed(on_failed),
 		is_debug_mode(is_debug_mode){
 	
 	}
@@ -193,10 +185,16 @@ private:
 	}
 
 public:
-	auto StartReceive() -> void {
+	auto StartReceive(
+			const OnReceivedFunc& on_received, 
+			const OnPeerClosedFunc& on_peer_closed, 
+			const OnFailedFunc& on_failed) -> void {
 		if(this->is_debug_mode()){
 			std::cout << "StartReceive" << std::endl;
 		}
+		this->on_received = on_received;
+		this->on_peer_closed = on_peer_closed;
+		this->on_failed = on_failed;
 		ReceiveHeader();	
 	}
 
@@ -346,7 +344,7 @@ private:
 
 				try{
 					//post/dispatchするべきか？
-					on_received(message_body);
+					on_received(this->socket, message_body);
 				}
 				catch(...){
 					this->/*Do*/Close();
@@ -382,10 +380,6 @@ private:
 
 public:
 	auto Close() -> void {
-		/*
-		this->socket->GetRawSocketRef().get_io_service().post(
-			boost::bind(&Connection::DoClose, this->shared_from_this()));	
-		*/
 		boost::system::error_code ec;
 		this->socket->GetRawSocketRef().shutdown(
 			boost::asio::ip::tcp::socket::shutdown_send, ec);

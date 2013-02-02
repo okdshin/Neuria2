@@ -7,3 +7,7 @@
 #include "CommandDispatcher.h"
 #include "CommandId.h"
 #include "DispatchCommandWrapper.h"
+#include "OnFailedFunc.h"
+#include "OnReceivedFunc.h"
+#include "OnSendedFunc.h"
+#include "ByteArraySender.h"
