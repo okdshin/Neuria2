@@ -344,10 +344,10 @@ private:
 
 				try{
 					//post/dispatchするべきか？
-					on_received(this->socket, message_body);
+					on_received(message_body);
 				}
 				catch(...){
-					this->/*Do*/Close();
+					this->Close();
 				}
 
 				this->received_byte_array.erase(
@@ -366,7 +366,7 @@ private:
 			}
 		}
 		else { 
-			this->/*Do*/Close();		
+			this->Close();		
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.

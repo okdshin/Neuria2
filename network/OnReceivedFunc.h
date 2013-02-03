@@ -9,18 +9,18 @@ namespace neuria{
 namespace network
 {
 class OnReceivedFunc{
+private:
+	using FuncType = boost::function<void (const ByteArray&)>;
 public:
-	OnReceivedFunc():on_received([](const Socket::Ptr&, const ByteArray&){}){}
-    OnReceivedFunc(boost::function<void (
-			const Socket::Ptr&, const ByteArray&)> on_received)
+	OnReceivedFunc():on_received([](const ByteArray&){}){}
+    OnReceivedFunc(FuncType on_received)
 		: on_received(on_received){}
 
-	auto operator()(
-			const Socket::Ptr& connection, const ByteArray& byte_array) -> void {
-		on_received(connection, byte_array);	
+	auto operator()(const ByteArray& byte_array) -> void {
+		on_received(byte_array);	
 	}
 private:
-	boost::function<void (const Socket::Ptr&, const ByteArray&)> on_received;
+	FuncType on_received;
 };
 }
 }
