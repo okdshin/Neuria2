@@ -9,7 +9,8 @@ namespace network
 class PortNumber{
 public:
     PortNumber(int port_num) : port_num(port_num){}
-    ~PortNumber(){}
+    PortNumber(const std::string& port_num_str) 
+		: port_num(boost::lexical_cast<int>(port_num_str)){}
 
 	auto ToInt()const -> int {
 		return this->port_num;	

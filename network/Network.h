@@ -11,7 +11,6 @@
 #include "Message.h"
 #include "MessageBody.h"
 #include "MessageHeader.h"
-#include "NodeId.h"
 #include "OnAcceptedFunc.h"
 #include "OnClosedFunc.h"
 #include "OnConnectedFunc.h"

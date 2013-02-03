@@ -44,7 +44,7 @@ public:
 	static auto Create(
 			Socket::Ptr socket, 
 			const BufferSize& buffer_size, 
-			const IsDebugMode& is_debug_mode = IsDebugMode(false)) -> Ptr {
+			const IsDebugMode& is_debug_mode = IsDebugMode(true)) -> Ptr {
 		auto new_connection = Ptr(new Connection(
 			socket, buffer_size, is_debug_mode));
 		std::cout << "connection created " 
