@@ -3,8 +3,7 @@
 #include <iostream>
 #include <boost/thread.hpp>
 #include "OnReceivedFunc.h"
-#include "OnClosedFunc.h"
-#include "InteractiveConnection.h"
+#include "Connection.h"
 using namespace neuria::network;
 
 int main(int argc, char* argv[])
@@ -15,15 +14,11 @@ int main(int argc, char* argv[])
 		OnAcceptedFunc([](Socket::Ptr socket){
 			std::cout << "OnAccepted!:" << socket << std::endl;
 			auto connection = 
-					InteractiveConnection::Create(socket, BufferSize(5), 
-				OnReceivedFunc([](const ByteArray& byte_array){
-					std::cout << "\"" <<
-						CreateStringFromByteArray(byte_array) << "\"" << std::endl;	
-				}),
-				OnPeerClosedFunc(),
-				OnFailedFunc()
-			);
-			connection->StartReceive();
+				Connection::Create(
+					socket, 
+					BufferSize(5)
+				);
+			//connection->StartReceive();
 		}),
 		OnFailedFunc([](const ErrorCode&){
 			std::cout << "OnFailed!" << std::endl;

@@ -47,13 +47,14 @@ public:
 			const IsDebugMode& is_debug_mode = IsDebugMode(true)) -> Ptr {
 		auto new_connection = Ptr(new Connection(
 			socket, buffer_size, is_debug_mode));
-		std::cout << "connection created " 
-			<< new_connection.get() << std::endl; 
+		std::cout << "Connection created " 
+			<< new_connection.get() 
+		<< std::endl; 
 		return new_connection;
 	}
 
 	~Connection(){
-		std::cout << "connection deleted" << std::endl;	
+		std::cout << "Connection deleted" << std::endl;	
 	}
 
 private:
@@ -232,7 +233,7 @@ private:
 			CheckIsEnableParseHeader(error_code, bytes_transferred);
 		}
 		else {
-			this->/*Do*/Close();
+			this->DoClose();
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
@@ -265,7 +266,7 @@ private:
 			}
 		}
 		else {
-			this->/*Do*/Close();
+			this->DoClose();
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
@@ -307,7 +308,7 @@ private:
 			CheckIsReceivedWholeMessageByteArray(error_code, bytes_transferred);
 		}
 		else { 
-			this->/*Do*/Close();		
+			this->DoClose();		
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
@@ -347,7 +348,7 @@ private:
 					on_received(message_body);
 				}
 				catch(...){
-					this->Close();
+					this->DoClose();
 				}
 
 				this->received_byte_array.erase(
@@ -366,7 +367,7 @@ private:
 			}
 		}
 		else { 
-			this->Close();		
+			this->DoClose();		
 			on_peer_closed(this->shared_from_this());
 			if(this->socket->GetRawSocketRef().is_open()){
 				//peer socket closed.
@@ -382,7 +383,7 @@ public:
 	auto Close() -> void {
 		boost::system::error_code ec;
 		this->socket->GetRawSocketRef().shutdown(
-			boost::asio::ip::tcp::socket::shutdown_send, ec);
+			boost::asio::ip::tcp::socket::shutdown_both, ec);
 	}
 
 private:

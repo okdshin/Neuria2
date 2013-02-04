@@ -16,14 +16,15 @@ public:
 		this->connection_pool.push_back(connection);
 	}
 
-	auto Remove(const Connection::Ptr& connection) -> void {
-			
+	auto Remove(const Connection::Ptr& connection) -> void {		
 		const auto iter = 
 			find(this->connection_pool.begin(), this->connection_pool.end(), 
 				connection);
-		if(iter != this->connection_pool.end()){
-			this->connection_pool.erase(iter);
-		}
+		assert(iter != this->connection_pool.end());
+		this->connection_pool.erase(iter);
+		std::cout << boost::format("Connection %1% removed from pool") 
+			% connection.get()
+		<< std::endl;
 	}
 
 	auto At(unsigned int i)const -> Connection::Ptr {

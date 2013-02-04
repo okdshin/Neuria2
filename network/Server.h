@@ -56,7 +56,7 @@ private:
 		this->StartAccept();
 	}
 private:
-	IoService::Ptr io_service;
+	const IoService::Ptr io_service;
 	boost::asio::ip::tcp::acceptor acceptor;
 	
 	OnAcceptedFunc on_accepted;

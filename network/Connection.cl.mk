@@ -1,9 +1,9 @@
-CXX = g++ -std=gnu++0x
-CXXFLAGS = -Wall -g -D ONFAILEDFUNC_UNIT_TEST
+CXX = clang++ -std=gnu++0x
+CXXFLAGS = -Wall -g -D CONNECTION_UNIT_TEST
 INCLUDES = 
-LIBS = -lboost_system
-OBJS = OnFailedFunc.o
-PROGRAM = OnFailedFunc.out
+LIBS = -lboost_system -lboost_thread -lpthread
+OBJS = Connection.o
+PROGRAM = Connection.out
 
 all:$(PROGRAM)
 

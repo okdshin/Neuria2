@@ -57,7 +57,7 @@ private:
 	}
 
 private:
-	IoService::Ptr io_service;
+	const IoService::Ptr io_service;
 
 };
 }

@@ -17,12 +17,12 @@ public:
 		: on_failed(on_failed){}
     ~OnFailedFunc(){}
 
-	auto operator()(const ErrorCode& error_code) -> void {
+	auto operator()(const ErrorCode& error_code)/*const*/ -> void {
 		on_failed(error_code);	
 	} 
 
 private:
-	boost::function<void (const ErrorCode&)> on_failed;
+	/*const*/ boost::function<void (const ErrorCode&)> on_failed;
 
 };
 }
