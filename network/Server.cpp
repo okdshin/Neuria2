@@ -8,8 +8,8 @@ using namespace neuria::network;
 
 int main(int argc, char* argv[])
 {
-	auto io_service = IoService::Create();
-	boost::asio::io_service::work w(io_service->GetRawIoServiceRef());
+	boost::asio::io_service io_service;
+	boost::asio::io_service::work w(io_service);
 	Server server(io_service, PortNumber(54322), 
 		OnAcceptedFunc([](Socket::Ptr socket){
 			std::cout << "OnAccepted!:" << socket << std::endl;
@@ -26,8 +26,8 @@ int main(int argc, char* argv[])
 		})
 	);
 	server.StartAccept();
-	boost::thread t([io_service](){
-		io_service->GetRawIoServiceRef().run();	
+	boost::thread t([&io_service](){
+		io_service.run();	
 	});
 	t.join();
 

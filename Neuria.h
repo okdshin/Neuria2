@@ -6,6 +6,7 @@
 #include "hash/Hash.h"
 #include "timer/Timer.h"
 #include "test/Test.h"
+#include "thread_safe/ThreadSafeVariable.h"
 namespace neuria
 {
 }

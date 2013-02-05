@@ -1,4 +1,4 @@
-CXX = g++ -std=gnu++0x
+CXX = clang++ -std=gnu++0x
 CXXFLAGS = -Wall -g -D CONNECTIONPOOL_UNIT_TEST
 INCLUDES = 
 LIBS = -lboost_system -lboost_thread -lpthread

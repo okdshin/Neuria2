@@ -24,6 +24,8 @@ class Connection
 	: public boost::enable_shared_from_this<Connection> {
 public:
 	using Ptr = boost::shared_ptr<Connection>;
+	using ConstPtr = boost::shared_ptr<const Connection>;
+
 	class OnPeerClosedFunc{
 	public:
 		OnPeerClosedFunc():on_peer_closed([](const Ptr&){
@@ -42,7 +44,7 @@ public:
 	};
 
 	static auto Create(
-			Socket::Ptr socket, 
+			const Socket::Ptr& socket, 
 			const BufferSize& buffer_size, 
 			const IsDebugMode& is_debug_mode = IsDebugMode(true)) -> Ptr {
 		auto new_connection = Ptr(new Connection(
@@ -59,7 +61,7 @@ public:
 
 private:
 	Connection(
-			Socket::Ptr socket, 
+			const Socket::Ptr& socket, 
 			const BufferSize& buffer_size,
 			const IsDebugMode& is_debug_mode)
 		:socket(socket), 
@@ -71,10 +73,14 @@ private:
 
 public:
 	auto GetRemoteHostName()const -> HostName {
+		assert("socket is not connected!" 
+			&& this->socket->GetRawSocketRef().is_open());
 		return this->socket->GetRemoteHostName();
 	}
 
 	auto GetRemotePortNumber()const -> PortNumber {
+		assert("socket is not connected!" 
+			&& this->socket->GetRawSocketRef().is_open());
 		return this->socket->GetRemotePortNumber();
 	}
 
@@ -395,7 +401,7 @@ private:
 
 };
 
-auto operator<<(std::ostream& os, const Connection::Ptr& connection) -> std::ostream& {
+auto operator<<(std::ostream& os, const Connection::ConstPtr& connection) -> std::ostream& {
 	os << boost::format("Connection:%1%:%2%")
 		% connection->GetRemoteHostName().ToString()
 		% connection->GetRemotePortNumber().ToInt()

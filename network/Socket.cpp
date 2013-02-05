@@ -7,7 +7,7 @@ using namespace neuria::network;
 
 int main(int argc, char* argv[])
 {
-	auto io_service = IoService::Create();
+	boost::asio::io_service io_service;
 	auto socket = Socket::Create(io_service);
 
     return 0;

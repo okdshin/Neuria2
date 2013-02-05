@@ -11,12 +11,12 @@ using namespace neuria::network;
 
 int main(int argc, char* argv[])
 {
-	auto io_service = IoService::Create();
-	boost::asio::io_service::work w(io_service->GetRawIoServiceRef());
+	boost::asio::io_service io_service;
+	boost::asio::io_service::work w(io_service);
 	Client client(io_service);
 	Connection::Ptr connection;	
 	client.Connect(HostName("localhost"), PortNumber(54322),
-		OnConnectedFunc([&connection](Socket::Ptr socket){
+		OnConnectedFunc([connection](Socket::Ptr socket){
 			connection = Connection::Create(
 				socket, 
 				BufferSize(256),
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 		}),
 		OnFailedFunc()
 	);
-	boost::thread t([io_service](){
+	boost::thread t([&io_service](){
 		io_service->GetRawIoServiceRef().run();	
 	});
 	while(true){

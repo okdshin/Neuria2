@@ -7,7 +7,6 @@
 #include "Client.h"
 #include "ErrorCode.h"
 #include "Connection.h"
-#include "IoService.h"
 #include "Message.h"
 #include "MessageBody.h"
 #include "MessageHeader.h"

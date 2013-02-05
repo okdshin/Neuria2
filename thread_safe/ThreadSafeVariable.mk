@@ -1,9 +1,9 @@
 CXX = g++ -std=gnu++0x
-CXXFLAGS = -Wall -g -D CONNECTIONPOOL_UNIT_TEST
+CXXFLAGS = -Wall -g -D THREADSAFEVARIABLE_UNIT_TEST
 INCLUDES = 
-LIBS = -lboost_system -lboost_thread -lpthread
-OBJS = ConnectionPool.o
-PROGRAM = ConnectionPool.out
+LIBS =
+OBJS = ThreadSafeVariable.o
+PROGRAM = ThreadSafeVariable.out
 
 all:$(PROGRAM)
 

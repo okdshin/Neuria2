@@ -12,7 +12,7 @@ namespace network
 {
 class Client{
 public:
-    Client(IoService::Ptr io_service) : io_service(io_service){}
+    Client(boost::asio::io_service& io_service) : io_service(io_service){}
 
 	auto Connect(
 			const HostName& host_name, 
@@ -20,7 +20,7 @@ public:
 			OnConnectedFunc on_connected,
 			OnFailedFunc on_failed) -> void {
 			
-		boost::asio::ip::tcp::resolver resolver(this->io_service->GetRawIoServiceRef());
+		boost::asio::ip::tcp::resolver resolver(this->io_service);
 		auto query = boost::asio::ip::tcp::resolver::query(
 			host_name.ToString(), port_num.ToString());
 		auto endpoint_iter = resolver.resolve(query);
@@ -57,7 +57,7 @@ private:
 	}
 
 private:
-	const IoService::Ptr io_service;
+	boost::asio::io_service& io_service;
 
 };
 }

@@ -25,6 +25,10 @@ auto operator<<(std::ostream& os, const HostName& host_name) -> std::ostream& {
 	os << "HostName:" << host_name.ToString();
 	return os;
 }
+
+auto operator==(const HostName& left, const HostName& right) -> bool {
+	return left.ToString() == right.ToString();
+}
 }
 }
 

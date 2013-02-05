@@ -15,8 +15,8 @@ void connect_handle(const boost::system::error_code& error)
 
 int main(int argc, char* argv[])
 {
-	auto io_service = IoService::Create();
-	boost::asio::io_service::work w(io_service->GetRawIoServiceRef());
+	boost::asio::io_service io_service;
+	boost::asio::io_service::work w(io_service);
 	
 	auto socket = Socket::Create(io_service);
 	socket->GetRawSocketRef().async_connect(
@@ -32,8 +32,8 @@ int main(int argc, char* argv[])
 		Connection::OnPeerClosedFunc(),
 		OnFailedFunc()
 	);
-	boost::thread t([io_service](){
-		io_service->GetRawIoServiceRef().run();
+	boost::thread t([&io_service](){
+		io_service.run();
 	});
 
 	std::cout << connection << std::endl;

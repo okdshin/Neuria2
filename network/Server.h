@@ -5,8 +5,6 @@
 #include <boost/bind.hpp>
 #include "Socket.h"
 #include "PortNumber.h"
-
-
 #include "BufferSize.h"
 #include "OnAcceptedFunc.h"
 #include "OnClosedFunc.h"
@@ -17,13 +15,13 @@ namespace network
 class Server{
 public:
     Server(
-		IoService::Ptr io_service,
+		boost::asio::io_service& io_service,
 		const PortNumber& port_num,
 		OnAcceptedFunc on_accepted,
 		OnFailedFunc on_failed)
 			:io_service(io_service),
 			acceptor(
-				io_service->GetRawIoServiceRef(), 
+				io_service, 
 				boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 
 				port_num.ToInt())),
 			on_accepted(on_accepted), 
@@ -56,7 +54,7 @@ private:
 		this->StartAccept();
 	}
 private:
-	const IoService::Ptr io_service;
+	boost::asio::io_service& io_service;
 	boost::asio::ip::tcp::acceptor acceptor;
 	
 	OnAcceptedFunc on_accepted;
