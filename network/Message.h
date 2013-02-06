@@ -12,7 +12,6 @@ public:
 	Message():header(), body(){}
     Message(const MessageHeader& header, const MessageBody& body) 
 		: header(header), body(body){}
-    ~Message(){}
 
 	auto ToByteArray()const -> ByteArray {
 		auto header_byte_array = header.Serialize();

@@ -23,7 +23,14 @@ public:
 		boost::asio::ip::tcp::resolver resolver(this->io_service);
 		auto query = boost::asio::ip::tcp::resolver::query(
 			host_name.ToString(), port_num.ToString());
-		auto endpoint_iter = resolver.resolve(query);
+		boost::asio::ip::tcp::resolver::iterator endpoint_iter;
+		try{
+			endpoint_iter = resolver.resolve(query);
+		}
+		catch(const std::exception& e){
+			on_failed(ErrorCode(e.what()));	
+			return;
+		}
 		if(endpoint_iter == boost::asio::ip::tcp::resolver::iterator()){
 			on_failed(ErrorCode("name resolve failed."));
 			return;	

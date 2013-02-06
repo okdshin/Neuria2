@@ -28,6 +28,7 @@ public:
 	
 	auto Dispatch(
 			const ByteArraySender& sender, 
+			const ConnectionCloser& closer,
 			const ByteArray& received_byte_array) -> void {
 		auto command = command::DispatchCommandWrapper::Parse(received_byte_array);
 		std::cout << boost::format("command id:%1%")
@@ -39,9 +40,10 @@ public:
 		}
 		else{
 			this->async_executer(
-				[this, sender, command](){
+				[this, sender, closer, command](){
 					this->func_dict[command.GetCommandId()](
 						sender,
+						closer,
 						command.GetWrappedByteArray()
 					);
 				}

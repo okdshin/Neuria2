@@ -59,12 +59,29 @@ public:
 		});
 	}
 	
+	friend auto operator<<(std::ostream& os, 
+			const ConnectionPool& connection_pool) -> std::ostream&;
 private:
 	boost::scoped_ptr<boost::asio::io_service::strand> strand;
 	std::vector<Connection::Ptr> connection_pool;
 
 };
 
+auto operator<<(std::ostream& os, 
+		const ConnectionPool& connection_pool) -> std::ostream& {
+	connection_pool.strand->post([&connection_pool, &os]() -> void {
+		os << connection_pool.connection_pool.size() << "{";
+		for(const auto& connection : connection_pool.connection_pool){
+			os << boost::format("%3%:%1%:%2%, ") 
+				% connection->GetRemoteHostName().ToString()
+				% connection->GetRemotePortNumber().ToInt()
+				% connection.get();
+		}
+		os << "}"<<std::flush;
+	});
+	return os;
+}
+/*
 auto operator<<(std::ostream& os, 
 		const ConnectionPool& connection_pool) -> std::ostream& {
 	connection_pool.ForEach([&os](const Connection::ConstPtr& connection){
@@ -75,5 +92,6 @@ auto operator<<(std::ostream& os,
 	});
 	return os;
 }
+*/
 }
 }

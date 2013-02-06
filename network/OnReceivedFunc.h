@@ -16,11 +16,11 @@ public:
     OnReceivedFunc(FuncType on_received)
 		: on_received(on_received){}
 
-	auto operator()(const ByteArray& byte_array) -> void {
+	auto operator()(const ByteArray& byte_array)const -> void {
 		on_received(byte_array);	
 	}
 private:
-	FuncType on_received;
+	const FuncType on_received;
 };
 }
 }

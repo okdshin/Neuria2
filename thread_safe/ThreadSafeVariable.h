@@ -12,9 +12,9 @@ template<class VariableType>
 class ThreadSafeVariable{
 public:
     ThreadSafeVariable(
-		boost::asio::io_service& io_service) 
+		boost::asio::io_service& io_service, const VariableType& initial_value) 
 		: strand(new boost::asio::io_service::strand(io_service)),
-		variable(){}
+		variable(initial_value){}
 
 	auto Assign(const VariableType& variable) -> void {
 		this->strand->post([this, variable](){

@@ -36,17 +36,17 @@ public:
 			: on_peer_closed(on_peer_closed){}
 		~OnPeerClosedFunc(){}
 
-		auto operator()(Ptr connection) -> void {
+		auto operator()(Ptr connection)const -> void {
 			on_peer_closed(connection);	
 		}
 	private:
-		boost::function<void (Ptr)> on_peer_closed;
+		const boost::function<void (Ptr)> on_peer_closed;
 	};
 
 	static auto Create(
 			const Socket::Ptr& socket, 
 			const BufferSize& buffer_size, 
-			const IsDebugMode& is_debug_mode = IsDebugMode(true)) -> Ptr {
+			const IsDebugMode& is_debug_mode = IsDebugMode(false)) -> Ptr {
 		auto new_connection = Ptr(new Connection(
 			socket, buffer_size, is_debug_mode));
 		std::cout << "Connection created " 
@@ -123,10 +123,6 @@ private:
 	ByteArray received_byte_array;
 	MessageHeader header;
 	
-	OnReceivedFunc on_received; 
-	OnPeerClosedFunc on_peer_closed; 
-	OnFailedFunc on_failed;
-
 	IsDebugMode is_debug_mode;
 
 public:
@@ -199,14 +195,20 @@ public:
 		if(this->is_debug_mode()){
 			std::cout << "StartReceive" << std::endl;
 		}
+		/*
 		this->on_received = on_received;
 		this->on_peer_closed = on_peer_closed;
 		this->on_failed = on_failed;
-		ReceiveHeader();	
+		*/
+		ReceiveHeader(on_received, on_peer_closed, on_failed);	
 	}
 
 private:
-	auto ReceiveHeader() -> void {
+	auto ReceiveHeader(
+		const OnReceivedFunc& on_received,
+		const OnPeerClosedFunc& on_peer_closed,
+		const OnFailedFunc& on_failed
+	) -> void {
 		if(this->is_debug_mode()){
 			std::cout << "ReceiveHeader" << std::endl;
 			OutputByteArray(std::cout << 
@@ -217,6 +219,7 @@ private:
 			boost::bind(
 				&Connection::AppendPartOfHeaderByteArray, 
 				this->shared_from_this(),
+				on_received, on_peer_closed, on_failed,
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred
 			)
@@ -224,6 +227,9 @@ private:
 	}
 
 	auto AppendPartOfHeaderByteArray(
+			const OnReceivedFunc& on_received,
+			const OnPeerClosedFunc& on_peer_closed,
+			const OnFailedFunc& on_failed,
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
 		if(this->is_debug_mode()){
@@ -236,7 +242,8 @@ private:
 				this->received_part_of_byte_array.begin() + bytes_transferred,
 				std::back_inserter(this->received_byte_array)
 			);
-			CheckIsEnableParseHeader(error_code, bytes_transferred);
+			CheckIsEnableParseHeader(
+				on_received, on_peer_closed, on_failed, error_code, bytes_transferred);
 		}
 		else {
 			this->DoClose();
@@ -251,6 +258,9 @@ private:
 	}
 
 	auto CheckIsEnableParseHeader(
+			const OnReceivedFunc& on_received,
+			const OnPeerClosedFunc& on_peer_closed,
+			const OnFailedFunc& on_failed,
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
 		if(this->is_debug_mode()){
@@ -262,13 +272,15 @@ private:
 					std::cout << "\t-> true" << std::endl;
 				}
 				this->header = MessageHeader::Parse(this->received_byte_array);
-				CheckIsReceivedWholeMessageByteArray(error_code, bytes_transferred);
+				CheckIsReceivedWholeMessageByteArray(
+					on_received, on_peer_closed, on_failed, 
+					error_code, bytes_transferred);
 			}
 			else{
 				if(this->is_debug_mode()){
 					std::cout << "\t-> false" << std::endl;
 				}
-				ReceiveHeader();	
+				ReceiveHeader(on_received, on_peer_closed, on_failed);	
 			}
 		}
 		else {
@@ -283,7 +295,11 @@ private:
 		}
 	}
 
-	auto ReceiveBody() -> void {
+	auto ReceiveBody(
+		const OnReceivedFunc& on_received,
+		const OnPeerClosedFunc& on_peer_closed,
+		const OnFailedFunc& on_failed	
+	) -> void {
 		if(this->is_debug_mode()){
 			std::cout << "ReceiveBody" << std::endl;
 			OutputByteArray(std::cout << "\t:", this->received_byte_array) << std::endl;
@@ -292,6 +308,7 @@ private:
 			boost::asio::buffer(this->received_part_of_byte_array),
 			boost::bind(&Connection::AppendPartOfBodyByteArray,
 				this->shared_from_this(),
+				on_received, on_peer_closed, on_failed,
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred
 			)
@@ -300,6 +317,9 @@ private:
 	}
 
 	auto AppendPartOfBodyByteArray(
+			const OnReceivedFunc& on_received,
+			const OnPeerClosedFunc& on_peer_closed,
+			const OnFailedFunc& on_failed,
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
 		if(this->is_debug_mode()){
@@ -311,7 +331,9 @@ private:
 				this->received_part_of_byte_array.begin() + bytes_transferred,
 				std::back_inserter(this->received_byte_array)
 			);
-			CheckIsReceivedWholeMessageByteArray(error_code, bytes_transferred);
+			CheckIsReceivedWholeMessageByteArray(
+				on_received, on_peer_closed, on_failed,
+				error_code, bytes_transferred);
 		}
 		else { 
 			this->DoClose();		
@@ -326,6 +348,9 @@ private:
 	}
 
 	auto CheckIsReceivedWholeMessageByteArray(
+			const OnReceivedFunc& on_received,
+			const OnPeerClosedFunc& on_peer_closed,
+			const OnFailedFunc& on_failed,
 			const boost::system::error_code& error_code, 
 			std::size_t bytes_transferred) -> void {
 		if(this->is_debug_mode()){
@@ -363,13 +388,15 @@ private:
 						+this->header.GetBodySize()	
 				);
 
-				CheckIsEnableParseHeader(error_code, bytes_transferred);
+				CheckIsEnableParseHeader(
+					on_received, on_peer_closed, on_failed, 
+					error_code, bytes_transferred);
 			}
 			else { //まだ全部受信できてない場合
 				if(this->is_debug_mode()){
 					std::cout << "\t-> false" << std::endl;
 				}
-				ReceiveBody();
+				ReceiveBody(on_received, on_peer_closed, on_failed);
 			}
 		}
 		else { 

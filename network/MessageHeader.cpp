@@ -2,7 +2,8 @@
 #include "MessageHeader.h"
 #include <iostream>
 
-using namespace network;
+using namespace neuria;
+using namespace neuria::network;
 
 int main(int argc, char* argv[])
 {
@@ -41,12 +42,14 @@ int main(int argc, char* argv[])
 		std::cout << header64.Serialize() << std::endl;
 		std::cout << MessageHeader::Parse(header64.Serialize()) << std::endl;
 	}
+/*
 	{
 		MessageHeader header64(pow(2, 128));
 		std::cout << header64 << std::endl;
 		std::cout << header64.Serialize() << std::endl;
 		std::cout << MessageHeader::Parse(header64.Serialize()) << std::endl;
 	}
+*/
     return 0;
 }
 
