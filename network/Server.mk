@@ -1,5 +1,5 @@
 CXX = g++ -std=gnu++0x
-CXXFLAGS = -Wall -g -D SERVER_UNIT_TEST
+CXXFLAGS = -Wall -g -D SERVER_UNIT_TEST -D BBOOST_ASIO_ENABLE_HANDLER_TRACKING
 INCLUDES = 
 LIBS = -lboost_system -lboost_thread -lpthread
 OBJS = Server.o

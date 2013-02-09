@@ -92,9 +92,9 @@ public:
 		}
 		auto command = MessageHeader(body_size);
 		return command;	
-		}catch(...){
+		}catch(const std::exception& e){
 			std::cout << "MessageHeader Parse Error!!"	<< std::endl;
-			throw;
+			throw e;
 		}
 	}
 
@@ -150,12 +150,14 @@ inline auto operator<<(std::ostream& os, const MessageHeader& header) -> std::os
 	return os;
 }
 
+/*
 inline auto operator<<(std::ostream& os, const ByteArray& byte_array) -> std::ostream& {
 	for(uint8_t byte : byte_array){
 		os << static_cast<int>(byte) << "\t";
 	}
 	return os;
 }
+*/
 
 auto CreateMessageHeaderFromBody(const MessageBody& message_body) -> MessageHeader {
 	return MessageHeader(message_body.ToByteArray().size());

@@ -30,7 +30,7 @@ public:
 			std::cout << "DispatchCommandWrapper Parse Error!!\n" 
 				<< e.what() << "\n" << CreateStringFromByteArray(byte_array) 
 				<< std::endl;
-			throw;	
+			throw e;	
 		}
 	}
 	
@@ -42,6 +42,7 @@ public:
 		}
 		catch(const std::exception& e){
 			std::cout << "Error:DispatchCommandWrapper::Serialize:"<< e.what() << std::endl;	
+			throw e;
 		}
 		return CreateByteArrayFromString(ss.str());	
 	}

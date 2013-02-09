@@ -24,26 +24,28 @@ int main(int argc, char* argv[])
 			boost::asio::ip::address::from_string("127.0.0.1"), 54322), 
 			connect_handle);
 
-	auto connection = Connection::Create(socket, BufferSize(256),
-		IsDebugMode(true)
-	);
+	auto connection = Connection::Create(socket, BufferSize(256));
 	connection->StartReceive(
 		OnReceivedFunc(),
 		Connection::OnPeerClosedFunc(),
 		OnFailedFunc()
 	);
-	boost::thread t([&io_service](){
-		io_service.run();
-	});
+	boost::thread_group thread_group;
+	for(unsigned int i = 0; i < 1; ++i){
+		thread_group.create_thread([&io_service](){
+			io_service.run();
+		});
+	}
 
 	std::cout << connection << std::endl;
-	std::string message_str;
 	while(true){
-		std::cin >> message_str;
+		int n;
+		std::cin >> n;
+		std::string message_str(n, 'a');
 		connection->Send(CreateByteArrayFromString(message_str), 
 			OnSendedFunc(), OnFailedFunc());
 	}
-	t.join();
+	thread_group.join_all();
 
     return 0;
 }
