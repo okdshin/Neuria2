@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 		const auto connection = Connection::Create(socket, BufferSize(256));
 		io_service.post([&connection_pool, connection](){
 			connection_pool.Add(connection);
-			connection_pool.Remove(connection);	
+			//connection_pool.Remove(connection);	
 		});	
 		/*
 		io_service.post([&connection_pool](){
@@ -38,6 +38,13 @@ int main(int argc, char* argv[])
 		});
 		*/
 	}	
+	connection_pool.QuoteRandomConnection([](const Connection::Ptr& connection){
+		std::cout << connection << std::endl;	
+	});
+	connection_pool.QuoteRandomConnection([](const Connection::Ptr& connection){
+		std::cout << connection << std::endl;	
+	});
+
 	//sleep();
 	thread_group.join_all();
 

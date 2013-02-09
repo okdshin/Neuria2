@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <boost/scoped_ptr.hpp>
+#include <boost/random.hpp>
+#include <cassert>
 #include "Connection.h"
 
 namespace neuria{
@@ -12,7 +14,8 @@ namespace network
 class ConnectionPool{
 public:
     ConnectionPool(boost::asio::io_service& io_service) 
-		: strand(new boost::asio::io_service::strand(io_service)){}
+		: strand(new boost::asio::io_service::strand(io_service)),
+		random_device(static_cast<unsigned int>(time(0))){}
 
 	auto Add(const Connection::Ptr& connection) -> void {
 		this->strand->post([this, connection](){
@@ -40,7 +43,7 @@ public:
 		});
 	}
 
-	auto PickUpAndApply(
+	auto PickUpAndQuote(
 			const HostName& host_name, const PortNumber& port_number,
 			boost::function<void (const Connection::Ptr&)> func)const -> void {
 		this->ForEach([func, host_name, port_number](const Connection::Ptr& connection){
@@ -59,11 +62,29 @@ public:
 		});
 	}
 	
+	auto QuoteRandomConnection(
+			boost::function<void (const Connection::Ptr&)> func) -> void {
+		this->strand->post([this, func](){
+			if(this->connection_pool.empty()){
+				std::cout
+					<< "QuoteRandomConnection called"
+					<< "but there is no connection in pool so immediately return..." 
+				<< std::endl;
+				return;
+			}
+			boost::random::uniform_int_distribution<> 
+				index_distribution(0, this->connection_pool.size()-1);
+			func(this->connection_pool.at(index_distribution(this->random_device)));
+		});
+	}
+
 	friend auto operator<<(std::ostream& os, 
 			const ConnectionPool& connection_pool) -> std::ostream&;
 private:
 	boost::scoped_ptr<boost::asio::io_service::strand> strand;
 	std::vector<Connection::Ptr> connection_pool;
+
+	boost::random::mt19937 random_device;
 
 };
 
