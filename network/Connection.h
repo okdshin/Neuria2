@@ -449,7 +449,7 @@ private:
 
 };
 
-auto operator<<(std::ostream& os, const Connection::ConstPtr& connection) -> std::ostream& {
+inline auto operator<<(std::ostream& os, const Connection::ConstPtr& connection) -> std::ostream& {
 	os << boost::format("Connection:%1%:%2%")
 		% connection->GetRemoteHostName().ToString()
 		% connection->GetRemotePortNumber().ToInt()

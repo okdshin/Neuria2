@@ -9,7 +9,7 @@ namespace test{
 
 
 template<class ValueType>
-auto GetInput(const std::string& prompt) -> ValueType
+inline auto GetInput(const std::string& prompt) -> ValueType
 {
 	std::cout << prompt << std::flush;
 	std::string input;

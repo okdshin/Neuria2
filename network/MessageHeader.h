@@ -159,11 +159,11 @@ inline auto operator<<(std::ostream& os, const ByteArray& byte_array) -> std::os
 }
 */
 
-auto CreateMessageHeaderFromBody(const MessageBody& message_body) -> MessageHeader {
+inline auto CreateMessageHeaderFromBody(const MessageBody& message_body) -> MessageHeader {
 	return MessageHeader(message_body.ToByteArray().size());
 }
 
-auto IsWholeMessageByteArrayReceived(
+inline auto IsWholeMessageByteArrayReceived(
 		const MessageHeader& header, const ByteArray& byte_array) -> bool {
 	return byte_array.size() >= header.GetBodySize()+header.GetHeaderSize();
 }

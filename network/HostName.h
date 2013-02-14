@@ -21,12 +21,13 @@ public:
 private:
 	std::string host_name_str;
 };
-auto operator<<(std::ostream& os, const HostName& host_name) -> std::ostream& {
+
+inline auto operator<<(std::ostream& os, const HostName& host_name) -> std::ostream& {
 	os << "HostName:" << host_name.ToString();
 	return os;
 }
 
-auto operator==(const HostName& left, const HostName& right) -> bool {
+inline auto operator==(const HostName& left, const HostName& right) -> bool {
 	return left.ToString() == right.ToString();
 }
 }

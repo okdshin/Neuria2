@@ -105,7 +105,7 @@ private:
 
 };
 
-auto operator<<(std::ostream& os, 
+inline auto operator<<(std::ostream& os, 
 		const ConnectionPool& connection_pool) -> std::ostream& {
 	connection_pool.strand->post([&connection_pool, &os]() -> void {
 		os << connection_pool.connection_pool.size() << "{";

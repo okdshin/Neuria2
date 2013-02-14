@@ -19,17 +19,17 @@ private:
 	std::string command_id_str;
 };
 
-auto operator<<(std::ostream& os, const CommandId& host_name) -> std::ostream& {
+inline auto operator<<(std::ostream& os, const CommandId& host_name) -> std::ostream& {
 	os << host_name.ToString();
 	return os;
 }
 
-auto operator==(const CommandId& left, const CommandId& right)->bool{
+inline auto operator==(const CommandId& left, const CommandId& right)->bool{
 	return left.ToString() == right.ToString();
 }
 
 //for std::map
-auto operator<(const CommandId& left, const CommandId& right)->bool{
+inline auto operator<(const CommandId& left, const CommandId& right)->bool{
 	return left.ToString() < right.ToString();
 }
 }
