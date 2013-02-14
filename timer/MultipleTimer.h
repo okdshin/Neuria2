@@ -10,12 +10,8 @@ namespace timer{
 
 class MultipleTimer{
 public:
-	using Ptr = boost::shared_ptr<MultipleTimer>;
-
-    static auto Create(boost::asio::io_service& service) -> Ptr {
-		return Ptr(new MultipleTimer(service));	
-	}
-
+    MultipleTimer(boost::asio::io_service& service) : service(service){}
+	
 	auto AddCallbackFuncAndStartTimer(unsigned int sec_interval, 
 			TimerCallbackFunc timer_callback, 
 			OnTimerErasedFunc on_timer_erased) -> void {
@@ -32,9 +28,7 @@ public:
 		timer->Start();
 	}
 
-private:
-    MultipleTimer(boost::asio::io_service& service) : service(service){}
-	
+private:	
 	std::vector<Timer::Ptr> timer_list;
 
 	boost::asio::io_service& service;

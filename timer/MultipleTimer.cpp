@@ -13,10 +13,10 @@ int main(int argc, char* argv[])
 	boost::asio::io_service::work work{service};
 	boost::thread thread(boost::bind(&boost::asio::io_service::run, &service));
 
-	auto multi_timer = MultipleTimer::Create(service);
+	auto multiple_timer = MultipleTimer(service);
 
 	int count = 1;
-	multi_timer->AddCallbackFuncAndStartTimer(2, 
+	multiple_timer.AddCallbackFuncAndStartTimer(2, 
 		TimerCallbackFunc([&count](){
 			std::cout << "hello:" << count << std::endl;
 			++count;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 	);
 
 	sleep(1);
-	multi_timer->AddCallbackFuncAndStartTimer(2, 
+	multiple_timer.AddCallbackFuncAndStartTimer(2, 
 		TimerCallbackFunc([](){
 			std::cout << "morning" << std::endl;
 			return IsContinue(false);

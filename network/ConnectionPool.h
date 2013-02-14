@@ -10,6 +10,8 @@
 namespace neuria{
 namespace network
 {
+
+using ConnectionList = std::vector<Connection::Ptr>;
 //thread safe
 class ConnectionPool{
 public:
@@ -43,6 +45,7 @@ public:
 		});
 	}
 
+	/*
 	auto PickUpAndQuote(
 			const HostName& host_name, const PortNumber& port_number,
 			boost::function<void (const Connection::Ptr&)> func)const -> void {
@@ -51,6 +54,20 @@ public:
 					&& connection->GetRemotePortNumber() == port_number){
 				func(connection);
 			}
+		});
+	}
+	*/
+	auto PickUpAndQuote(
+			boost::function<bool (const Connection::Ptr&)> decider,
+			boost::function<void (const ConnectionList&)> quoter)const -> void {
+		this->strand->post([this, decider, quoter]() -> void {
+			ConnectionList connection_list;
+			for(const auto& connection : this->connection_pool){
+				if(decider(connection)){
+					connection_list.push_back(connection);	
+				}
+			}
+			quoter(connection_list);
 		});
 	}
 
