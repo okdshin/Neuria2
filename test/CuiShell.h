@@ -20,7 +20,8 @@ class CuiShell{
 public:
 	using ArgList = std::vector<std::string>;
 
-	CuiShell(std::ostream& os=std::cout):func_dict(), os(os){
+	CuiShell(std::ostream& os=std::cout, std::istream& is=std::cin)
+		:	func_dict(), os(os), is(is){
 		this->Register("help", "shows this help ;)", 
 			ShellFunc(boost::bind(&CuiShell::Help, this, _1)));
 	}
@@ -56,7 +57,7 @@ public:
 
 	auto Start() -> void {
 		while(true){
-			auto command = GetInput<std::string>("command?:");
+			auto command = GetInput<std::string>("command?:", is);
 			Call(command);
 		}
 	}
@@ -79,6 +80,7 @@ private:
 
 	std::map<std::string, std::tuple<std::string, ShellFunc>> func_dict;
 	std::ostream& os;
+	std::istream& is;
 };
 
 inline auto RegisterExitFunc(CuiShell& shell, const std::string& bye_message) -> void {
