@@ -57,7 +57,7 @@ public:
 
 	auto Start() -> void {
 		while(true){
-			auto command = GetInput<std::string>("command?:", is);
+			auto command = GetInput<std::string>("command?:", os, is);
 			Call(command);
 		}
 	}

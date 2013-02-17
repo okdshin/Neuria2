@@ -9,9 +9,10 @@ namespace test{
 
 
 template<class ValueType>
-inline auto GetInput(const std::string& prompt, std::istream& is) -> ValueType
+inline auto GetInput(
+	const std::string& prompt, std::ostream& os, std::istream& is) -> ValueType
 {
-	std::cout << prompt << std::flush;
+	os << prompt << std::flush;
 	std::string input;
 	std::getline(is, input);
 	try
@@ -20,8 +21,8 @@ inline auto GetInput(const std::string& prompt, std::istream& is) -> ValueType
 	}
 	catch(boost::bad_lexical_cast& e)
 	{
-		std::cout << "error. retry." << "\n";
-		return GetInput<ValueType>(prompt, is);	
+		os << "error. retry." << "\n";
+		return GetInput<ValueType>(prompt, os, is);	
 	}
 }
 
