@@ -18,13 +18,15 @@ int main(int argc, char* argv[])
 			&boost::asio::io_service::run, &io_service));
 	}
 	
-	ConnectionPool connection_pool(io_service);
+	auto connection_pool = ConnectionPool::Create(io_service, 
+		OnConnectionAdded(), 
+		OnConnectionRemoved());
 	const auto socket = Socket::Create(io_service);
 
 	for(unsigned int i = 0; i < 1000; ++i){
 		const auto connection = Connection::Create(socket, BufferSize(256));
-		io_service.post([&connection_pool, connection](){
-			connection_pool.Add(connection);
+		io_service.post([connection_pool, connection](){
+			connection_pool->Add(connection);
 			//connection_pool.Remove(connection);	
 		});	
 		/*
@@ -38,10 +40,10 @@ int main(int argc, char* argv[])
 		});
 		*/
 	}	
-	connection_pool.QuoteRandomConnection([](const Connection::Ptr& connection){
+	connection_pool->QuoteRandomConnection([](const Connection::Ptr& connection){
 		std::cout << connection << std::endl;	
 	});
-	connection_pool.QuoteRandomConnection([](const Connection::Ptr& connection){
+	connection_pool->QuoteRandomConnection([](const Connection::Ptr& connection){
 		std::cout << connection << std::endl;	
 	});
 

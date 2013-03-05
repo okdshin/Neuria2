@@ -42,9 +42,9 @@ public:
 	class ListQuoter {
 	private:
 		using RawListQuoterType = 
-			boost::function<boost::function<void (const std::vector<Element>&)>>;
+			boost::function<boost::function<void (const std::vector<ElementType>&)>>;
 	public:
-		RawListQuoter(RawListQuoterType raw_list_quoter) 
+		ListQuoter(RawListQuoterType raw_list_quoter) 
 			: raw_list_quoter(raw_list_quoter){}
 
 		auto operator()(boost::function<void (const std::vector<ElementType>&)> receiver)const -> void {

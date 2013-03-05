@@ -6,6 +6,8 @@
 #include <boost/random.hpp>
 #include <cassert>
 #include "Connection.h"
+#include "OnConnectionAdded.h"
+#include "OnConnectionRemoved.h"
 
 namespace neuria{
 namespace network
@@ -15,12 +17,16 @@ using ConnectionList = std::vector<Connection::Ptr>;
 //thread safe
 class ConnectionPool{
 public:
-    ConnectionPool(boost::asio::io_service& io_service) 
-		: strand(new boost::asio::io_service::strand(io_service)),
-		random_device(static_cast<unsigned int>(time(0))){}
+	using Ptr = boost::shared_ptr<ConnectionPool>;
+	static auto Create(boost::asio::io_service& io_service,
+			const OnConnectionAdded& on_added,
+			const OnConnectionRemoved& on_removed) -> Ptr {
+		return Ptr(new ConnectionPool(io_service, on_added, on_removed));	
+	}
 
 	auto Add(const Connection::Ptr& connection) -> void {
 		this->strand->post([this, connection](){
+			this->on_added(connection);
 			this->connection_pool.push_back(connection);
 		});
 	}
@@ -31,6 +37,7 @@ public:
 				find(this->connection_pool.begin(), this->connection_pool.end(), 
 					connection);
 			if(iter != this->connection_pool.end()){
+				this->on_removed(connection);
 				this->connection_pool.erase(iter);
 				std::cout << boost::format("Connection %1% removed from pool") 
 					% connection.get()
@@ -98,10 +105,20 @@ public:
 	friend auto operator<<(std::ostream& os, 
 			const ConnectionPool& connection_pool) -> std::ostream&;
 private:
+    ConnectionPool(boost::asio::io_service& io_service, 
+			const OnConnectionAdded& on_added,
+			const OnConnectionRemoved& on_removed) 
+		: strand(new boost::asio::io_service::strand(io_service)),
+		on_added(on_added), on_removed(on_removed),
+		random_device(static_cast<unsigned int>(time(0))){}
+	
+	
 	boost::scoped_ptr<boost::asio::io_service::strand> strand;
+	OnConnectionAdded on_added;
+	OnConnectionRemoved on_removed;
+	boost::random::mt19937 random_device;
 	std::vector<Connection::Ptr> connection_pool;
 
-	boost::random::mt19937 random_device;
 
 };
 

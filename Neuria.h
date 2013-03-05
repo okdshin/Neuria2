@@ -6,7 +6,7 @@
 #include "hash/Hash.h"
 #include "timer/Timer.h"
 #include "shell/Shell.h"
-#include "thread_safe/ThreadSafeVariable.h"
+#include "thread_safe/ThreadSafe.h"
 namespace neuria
 {
 }
